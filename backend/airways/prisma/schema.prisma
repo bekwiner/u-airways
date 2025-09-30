@@ -1,0 +1,400 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int       @id @default(autoincrement())
+  email       String    @unique
+  password    String
+  full_name   String?
+  phone       String?
+  avatar_url  String?
+  is_active   Boolean   @default(true)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  role        Role      @default(USER)
+
+  tickets     Ticket[]
+  reviews     Review[]
+  loyalty     Loyalty?
+  transactions Transaction[]
+  news        News[]
+  hotel_bookings HotelBooking[]
+  taxi_bookings TaxiBooking[]
+  notifications Notification[]
+
+  @@map("users")
+}
+
+model Admin {
+  id          Int       @id @default(autoincrement())
+  email       String    @unique
+  password    String
+  username    String    @unique
+  full_name   String
+  role        AdminRole @default(ADMIN)
+
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  @@map("admins")
+}
+
+model Country {
+  id        Int      @id @default(autoincrement())
+  name      String
+  code      String   @unique
+  currency  String
+
+  cities    City[]
+
+  @@map("countries")
+}
+
+model City {
+  id        Int       @id @default(autoincrement())
+  name      String
+  country_id Int
+  timezone  String?
+
+  country   Country   @relation(fields: [country_id], references: [id], onDelete: Cascade)
+  airports  Airport[]
+  hotels    Hotel[]
+  taxis     Taxi[]
+
+  @@unique([name, country_id])
+  @@map("cities")
+}
+
+model Airport {
+  id          Int       @id @default(autoincrement())
+  code        String    @unique
+  name        String
+  city_id     Int
+
+  city        City      @relation(fields: [city_id], references: [id], onDelete: Cascade)
+  departures  Flight[]  @relation("DepartureAirport")
+  arrivals    Flight[]  @relation("ArrivalAirport")
+
+  @@map("airports")
+}
+
+model Company {
+  id        Int      @id @default(autoincrement())
+  name      String
+  code      String   @unique
+  website   String?
+  logo_url  String?
+
+  planes    Plane[]
+
+  @@map("companies")
+}
+
+model Plane {
+  id            Int      @id @default(autoincrement())
+  model         String
+  registration  String   @unique
+  capacity      Int
+  company_id    Int
+
+  company       Company  @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  seats         Seat[]
+  flights       Flight[]
+
+  @@map("planes")
+}
+
+model Class {
+  id              Int      @id @default(autoincrement())
+  name            String   @unique
+  baggage_weight  Int
+  meal_service    Boolean  @default(false)
+  priority_boarding Boolean @default(false)
+
+  seats           Seat[]
+  tickets         Ticket[]
+
+  @@map("classes")
+}
+
+model Seat {
+  id          Int     @id @default(autoincrement())
+  plane_id    Int
+  class_id    Int
+  seat_number String  @unique
+  is_window   Boolean @default(false)
+  is_aisle    Boolean @default(false)
+  is_available Boolean @default(true)
+
+  plane       Plane   @relation(fields: [plane_id], references: [id], onDelete: Cascade)
+  class       Class   @relation(fields: [class_id], references: [id], onDelete: Cascade)
+  tickets     Ticket[]
+
+  @@unique([plane_id, seat_number])
+  @@map("seats")
+}
+
+model Flight {
+  id              Int       @id @default(autoincrement())
+  flight_number   String
+  plane_id        Int
+  departure_airport_id Int
+  arrival_airport_id Int
+  departure_time  DateTime
+  arrival_time    DateTime
+  base_price      Decimal
+  gate            String?
+  terminal        String?
+  status          FlightStatus @default(SCHEDULED)
+  is_active       Boolean   @default(true)
+  created_at      DateTime  @default(now())
+
+  plane           Plane     @relation(fields: [plane_id], references: [id], onDelete: Cascade)
+  departure_airport Airport @relation("DepartureAirport", fields: [departure_airport_id], references: [id], onDelete: Cascade)
+  arrival_airport Airport  @relation("ArrivalAirport", fields: [arrival_airport_id], references: [id], onDelete: Cascade)
+  tickets         Ticket[]
+  reviews         Review[]
+
+  @@unique([flight_number, departure_time])
+  @@map("flights")
+}
+
+model Ticket {
+  id                Int       @id @default(autoincrement())
+  booking_reference String
+  flight_id         Int
+  user_id           Int
+  seat_id           Int
+  class_id          Int
+  passenger_name    String
+  passenger_passport String?
+  price             Decimal
+  taxes_fees        Decimal
+  total_price       Decimal
+  status            TicketStatus @default(BOOKED)
+  special_requests  Json?
+  created_at        DateTime  @default(now())
+
+  flight            Flight    @relation(fields: [flight_id], references: [id], onDelete: Cascade)
+  user              User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  seat              Seat      @relation(fields: [seat_id], references: [id], onDelete: Cascade)
+  class             Class     @relation(fields: [class_id], references: [id], onDelete: Cascade)
+
+  @@map("tickets")
+}
+
+model Review {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  flight_id  Int
+  rating     Int
+  comment    String?
+  created_at DateTime @default(now())
+
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  flight     Flight   @relation(fields: [flight_id], references: [id], onDelete: Cascade)
+
+  @@map("reviews")
+}
+
+model News {
+  id          Int       @id @default(autoincrement())
+  title       String
+  content     String
+  slug        String?   @unique
+  is_featured Boolean   @default(false)
+  is_published Boolean  @default(false)
+  published_at DateTime?
+  views_count Int       @default(0)
+  author_id   Int?
+  is_active   Boolean   @default(true)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  author      User?     @relation(fields: [author_id], references: [id])
+
+  @@map("news")
+}
+
+model Loyalty {
+  id          Int      @id @default(autoincrement())
+  user_id     Int      @unique
+  points      Int      @default(0)
+  tier        LoyaltyTier @default(BRONZE)
+  created_at  DateTime @default(now())
+
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("loyalty")
+}
+
+model Transaction {
+  id            Int       @id @default(autoincrement())
+  user_id       Int
+  amount        Decimal
+  type          TransactionType
+  description   String?
+  status        TransactionStatus @default(PENDING)
+  reference_id  String?
+  gateway       String?
+  gateway_response Json?
+  created_at    DateTime  @default(now())
+
+  user          User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("transactions")
+}
+
+model Hotel {
+  id          Int       @id @default(autoincrement())
+  name        String
+  city_id     Int
+  address     String
+  rating      Float
+  price_per_night Decimal
+  amenities   Json?
+  is_active   Boolean   @default(true)
+
+  city        City      @relation(fields: [city_id], references: [id], onDelete: Cascade)
+  bookings    HotelBooking[]
+
+  @@map("hotels")
+}
+
+model HotelBooking {
+  id          Int       @id @default(autoincrement())
+  user_id     Int
+  hotel_id    Int
+  check_in    DateTime
+  check_out   DateTime
+  rooms       Int
+  total_price Decimal
+  status      BookingStatus @default(CONFIRMED)
+  created_at  DateTime  @default(now())
+
+  user        User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  hotel       Hotel     @relation(fields: [hotel_id], references: [id], onDelete: Cascade)
+
+  @@map("hotel_bookings")
+}
+
+model Taxi {
+  id          Int       @id @default(autoincrement())
+  company     String
+  phone       String
+  city_id     Int
+  rating      Float     @default(0)
+  is_active   Boolean   @default(true)
+
+  city        City      @relation(fields: [city_id], references: [id], onDelete: Cascade)
+  bookings    TaxiBooking[]
+
+  @@map("taxis")
+}
+
+model TaxiBooking {
+  id          Int       @id @default(autoincrement())
+  user_id     Int
+  taxi_id     Int
+  pickup_location String
+  dropoff_location String
+  pickup_time DateTime
+  passengers  Int
+  total_price Decimal
+  status      BookingStatus @default(CONFIRMED)
+  created_at  DateTime  @default(now())
+
+  user        User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  taxi        Taxi      @relation(fields: [taxi_id], references: [id], onDelete: Cascade)
+
+  @@map("taxi_bookings")
+}
+
+model Notification {
+  id          Int       @id @default(autoincrement())
+  user_id     Int?
+  title       String
+  message     String
+  type        NotificationType
+  is_read     Boolean   @default(false)
+  created_at  DateTime  @default(now())
+
+  user        User?     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model Setting {
+  id          Int       @id @default(autoincrement())
+  key         String    @unique
+  value       Json?
+  description String?
+  created_at  DateTime  @default(now())
+
+  @@map("settings")
+}
+
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum AdminRole {
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum FlightStatus {
+  SCHEDULED
+  DELAYED
+  CANCELLED
+  COMPLETED
+}
+
+enum TicketStatus {
+  BOOKED
+  CONFIRMED
+  CHECKED_IN
+  BOARDED
+  CANCELLED
+  NO_SHOW
+}
+
+enum TransactionType {
+  PAYMENT
+  REFUND
+  LOYALTY_REDEEM
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum LoyaltyTier {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum NotificationType {
+  BOOKING_CONFIRMATION
+  FLIGHT_UPDATE
+  PROMOTION
+  SYSTEM
+}
