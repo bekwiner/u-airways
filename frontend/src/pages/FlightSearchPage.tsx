@@ -7,29 +7,40 @@ import EmptyState from '../components/EmptyState'
 import { flightsApi } from '../lib/api'
 import { formatCurrency } from '../utils/format'
 
-interface SearchFlightDto {
+type ApiFlight = {
+  id?: number
+  flight_number?: string
+  code?: string
+  airline?: { name?: string }
+  departure?: { airport?: string; city?: string; time?: string }
+  arrival?: { airport?: string; city?: string; time?: string }
+  duration?: number | string
+  price?: number | string
+  priceFrom?: number | string
+  available_seats?: number
+  availableSeats?: number
+}
+
+type FlightSearchResult = {
   id: number
   code: string
-  airline: {
-    name: string
-  }
-  departureAirport: {
-    code: string
-    city: {
-      name: string
-    }
-  }
-  arrivalAirport: {
-    code: string
-    city: {
-      name: string
-    }
-  }
+  airline: string
+  departureAirport: string
+  arrivalAirport: string
   departureTime: string
   arrivalTime: string
   duration: string
   priceFrom: number
   availableSeats: number
+}
+
+const formatDuration = (minutes: number | null | undefined) => {
+  if (!minutes || Number.isNaN(minutes)) {
+    return '--'
+  }
+  const hours = Math.floor(minutes / 60)
+  const remainingMinutes = Math.max(0, minutes % 60)
+  return `${hours}h ${remainingMinutes}m`
 }
 
 const FlightSearchPage = () => {
@@ -38,15 +49,74 @@ const FlightSearchPage = () => {
 
   const queryKey = useMemo(() => ['flights', location.search], [location.search])
 
-  const { data, isLoading, isError } = useQuery(queryKey, async () => {
+  const searchPayload = useMemo(() => {
     const params = Object.fromEntries(searchParams.entries())
-    const { data: response } = await flightsApi.search(params)
-    return response.data as SearchFlightDto[]
-  })
+    const from = params.from?.trim()
+    const to = params.to?.trim()
+    const departureDate = params.departureDate
+
+    if (!from || !to || !departureDate) {
+      return null
+    }
+
+    const passengers = Number(params.passengers ?? '1')
+    const classParam = params.seatClass?.trim().toLowerCase()
+    const classToken = classParam
+      ? `${classParam.charAt(0).toUpperCase()}${classParam.slice(1)}`
+      : undefined
+
+    return {
+      departure_airport: from.toUpperCase(),
+      arrival_airport: to.toUpperCase(),
+      departure_date: departureDate,
+      return_date: params.returnDate || undefined,
+      adults: Number.isFinite(passengers) && passengers > 0 ? passengers : 1,
+      class: classToken,
+    }
+  }, [searchParams])
+
+  const {
+    data: flights = [],
+    isLoading,
+    isError,
+  } = useQuery(
+    queryKey,
+    async () => {
+      const response = await flightsApi.search(searchPayload as Record<string, unknown>)
+      const payload = Array.isArray(response.data?.data) ? response.data.data : []
+
+      return payload.map((flight: ApiFlight): FlightSearchResult => {
+        const durationMinutes = Number(flight?.duration ?? 0)
+        const departureLabel = flight?.departure
+          ? [flight.departure.airport ?? '', flight.departure.city ?? ''].filter(Boolean).join(' - ')
+          : '--'
+        const arrivalLabel = flight?.arrival
+          ? [flight.arrival.airport ?? '', flight.arrival.city ?? ''].filter(Boolean).join(' - ')
+          : '--'
+
+        return {
+          id: flight?.id ?? 0,
+          code: flight?.flight_number ?? flight?.code ?? 'N/A',
+          airline: flight?.airline?.name ?? 'Unknown Airline',
+          departureAirport: departureLabel,
+          arrivalAirport: arrivalLabel,
+          departureTime: flight?.departure?.time ?? '',
+          arrivalTime: flight?.arrival?.time ?? '',
+          duration: formatDuration(durationMinutes),
+          priceFrom: Number(flight?.price ?? flight?.priceFrom ?? 0),
+          availableSeats: flight?.available_seats ?? flight?.availableSeats ?? 0,
+        }
+      })
+    },
+    {
+      enabled: Boolean(searchPayload),
+    },
+  )
 
   const from = searchParams.get('from')
   const to = searchParams.get('to')
   const passengers = searchParams.get('passengers')
+  const hasSearchCriteria = Boolean(searchPayload)
 
   return (
     <div className="mx-auto min-h-screen max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
@@ -71,29 +141,22 @@ const FlightSearchPage = () => {
         </div>
       </div>
 
-      {isLoading ? (
+      {!hasSearchCriteria ? (
+        <EmptyState
+          title="Search for flights"
+          description="Use the form on the homepage to choose your origin, destination and travel dates."
+        />
+      ) : isLoading ? (
         <Loader />
       ) : isError ? (
         <EmptyState
           title="Unable to load flights"
           description="Try adjusting your filters and search again."
         />
-      ) : data && data.length > 0 ? (
+      ) : flights.length > 0 ? (
         <div className="space-y-6">
-          {data.map((flight) => (
-            <FlightCard
-              key={flight.id}
-              id={flight.id}
-              code={flight.code}
-              airline={flight.airline.name}
-              departureAirport={`${flight.departureAirport.code} - ${flight.departureAirport.city.name}`}
-              arrivalAirport={`${flight.arrivalAirport.code} - ${flight.arrivalAirport.city.name}`}
-              departureTime={flight.departureTime}
-              arrivalTime={flight.arrivalTime}
-              duration={flight.duration}
-              priceFrom={flight.priceFrom}
-              availableSeats={flight.availableSeats}
-            />
+          {flights.map((flight) => (
+            <FlightCard key={flight.id} {...flight} />
           ))}
         </div>
       ) : (
@@ -115,3 +178,7 @@ const FlightSearchPage = () => {
 }
 
 export default FlightSearchPage
+
+
+
+

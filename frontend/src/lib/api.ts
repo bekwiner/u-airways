@@ -78,7 +78,7 @@ export const userApi = {
 }
 
 export const flightsApi = {
-  search: (params: Record<string, unknown>) => api.get('/flights/search', { params }),
+  search: (payload: Record<string, unknown>) => api.post('/flights/search', payload),
   getById: (id: number | string) => api.get(`/flights/${id}`),
   getPopularRoutes: () => api.get('/flights/popular-routes'),
 }
@@ -94,12 +94,21 @@ export const newsApi = {
   getAll: (params: Record<string, unknown>) => api.get('/news', { params }),
   getFeatured: () => api.get('/news/featured'),
   getBySlug: (slug: string) => api.get(`/news/slug/${slug}`),
+  create: (payload: Record<string, unknown>) => api.post('/news', payload),
+  update: (id: number | string, payload: Record<string, unknown>) => api.put(`/news/${id}`, payload),
+  remove: (id: number | string) => api.delete(`/news/${id}`),
 }
 
 export const adminApi = {
   getDashboardStats: () => api.get('/admin/dashboard'),
   getUsers: (params: Record<string, unknown>) => api.get('/admin/users', { params }),
   getFlights: (params: Record<string, unknown>) => api.get('/admin/flights', { params }),
+  createFlight: (payload: Record<string, unknown>) => api.post('/admin/flights', payload),
+  updateFlight: (id: number | string, payload: Record<string, unknown>) =>
+    api.put(`/admin/flights/${id}`, payload),
+  deleteFlight: (id: number | string) => api.delete(`/admin/flights/${id}`),
+  cancelFlight: (id: number | string, payload?: Record<string, unknown>) =>
+    api.post(`/admin/flights/${id}/cancel`, payload ?? {}),
   getBookings: (params: Record<string, unknown>) => api.get('/admin/bookings', { params }),
 }
 
@@ -113,3 +122,9 @@ export const notificationApi = {
   markAsRead: (id: number) => api.post(`/notifications/${id}/read`),
   markAllAsRead: () => api.post('/notifications/read-all'),
 }
+
+
+
+
+
+

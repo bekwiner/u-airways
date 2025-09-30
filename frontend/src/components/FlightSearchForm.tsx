@@ -52,16 +52,17 @@ const FlightSearchForm = () => {
     >
       <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
         <div className="md:col-span-3">
-          <label className="text-sm font-medium text-gray-700">From</label>
+          <label className="text-sm font-medium text-black">From</label>
           <div className="mt-2 flex items-center space-x-3 rounded-lg border border-gray-200 px-3 py-2">
             <MapPin className="h-5 w-5 text-primary-600" />
             <input
+              color="blue"
               type="text"
               name="from"
               value={form.from}
               onChange={handleChange}
               placeholder="TAS"
-              className="w-full bg-transparent focus:outline-none"
+              className="w-full bg-transparent focus:outline-none text-black"
               required
             />
           </div>
@@ -79,7 +80,7 @@ const FlightSearchForm = () => {
         </div>
 
         <div className="md:col-span-3">
-          <label className="text-sm font-medium text-gray-700">To</label>
+          <label className="text-sm font-medium text-black">To</label>
           <div className="mt-2 flex items-center space-x-3 rounded-lg border border-gray-200 px-3 py-2">
             <MapPin className="h-5 w-5 text-primary-600" />
             <input
@@ -88,45 +89,45 @@ const FlightSearchForm = () => {
               value={form.to}
               onChange={handleChange}
               placeholder="IST"
-              className="w-full bg-transparent focus:outline-none"
+              className="w-full bg-transparent focus:outline-none text-black"
               required
             />
           </div>
         </div>
 
         <div className="md:col-span-2">
-          <label className="text-sm font-medium text-gray-700">Departure</label>
+          <label className="text-sm font-medium text-black">Departure</label>
           <div className="mt-2 flex items-center space-x-3 rounded-lg border border-gray-200 px-3 py-2">
-            <Calendar className="h-5 w-5 text-primary-600" />
+            <Calendar className="h-5 w-5 text-black" />
             <input
               type="date"
               name="departureDate"
               value={form.departureDate}
               onChange={handleChange}
-              className="w-full bg-transparent focus:outline-none"
+              className="w-full bg-white focus:outline-none text-black"
               required
             />
           </div>
         </div>
 
         <div className="md:col-span-2">
-          <label className="text-sm font-medium text-gray-700">Return</label>
+          <label className="text-sm font-medium text-black">Return</label>
           <div className="mt-2 flex items-center space-x-3 rounded-lg border border-gray-200 px-3 py-2">
-            <Calendar className="h-5 w-5 text-primary-600" />
+            <Calendar className="h-5 w-5 text-black" />
             <input
               type="date"
               name="returnDate"
               value={form.returnDate}
               onChange={handleChange}
-              className="w-full bg-transparent focus:outline-none"
+              className="w-full bg-white focus:outline-none text-black"
             />
           </div>
         </div>
 
         <div className="md:col-span-1">
-          <label className="text-sm font-medium text-gray-700">Passengers</label>
-          <div className="mt-2 flex items-center space-x-3 rounded-lg border border-gray-200 px-3 py-2">
-            <Users className="h-5 w-5 text-primary-600" />
+          <label className="text-sm font-medium text-black">Passengers</label>
+          <div className="mt-2 flex items-center space-x-3 rounded-lg border border-gray-200 px-3 py-2 bg-white">
+            <Users className="h-5 w-5 text-black" />
             <input
               type="number"
               name="passengers"
@@ -134,20 +135,20 @@ const FlightSearchForm = () => {
               max={9}
               value={form.passengers}
               onChange={handleChange}
-              className="w-full bg-transparent focus:outline-none"
+              className="w-full bg-white focus:outline-none text-black"
             />
           </div>
         </div>
 
         <div className="md:col-span-2">
-          <label className="text-sm font-medium text-gray-700">Class</label>
+          <label className="text-sm font-medium text-black">Class</label>
           <select
             name="seatClass"
             value={form.seatClass}
             onChange={(event) =>
               setForm((prev) => ({ ...prev, seatClass: event.target.value }))
             }
-            className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 focus:outline-none"
+            className="mt-2 w-full rounded-lg border border-gray-200 px-3 py-2 focus:outline-none text-black bg-white"
           >
             <option value="ECONOMY">Economy</option>
             <option value="BUSINESS">Business</option>

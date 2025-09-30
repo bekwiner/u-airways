@@ -16,6 +16,9 @@ import ProfilePage from './pages/dashboard/ProfilePage'
 import NewsPage from './pages/NewsPage'
 import NewsDetailPage from './pages/NewsDetailPage'
 import AdminDashboard from './pages/admin/AdminDashboard'
+import AdminLayout from './layouts/AdminLayout'
+import FlightsAdminPage from './pages/admin/FlightsAdminPage'
+import NewsAdminPage from './pages/admin/NewsAdminPage'
 import NotFoundPage from './pages/NotFoundPage'
 
 type GuardProps = {
@@ -43,7 +46,7 @@ const AdminRoute = ({ children }: GuardProps) => {
 
 const App = () => {
   return (
-    <Routes>
+        <Routes>
       <Route element={<MainLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/flights" element={<FlightSearchPage />} />
@@ -74,10 +77,14 @@ const App = () => {
         path="/admin"
         element={
           <AdminRoute>
-            <AdminDashboard />
+            <AdminLayout />
           </AdminRoute>
         }
-      />
+      >
+        <Route index element={<AdminDashboard />} />
+        <Route path="flights" element={<FlightsAdminPage />} />
+        <Route path="news" element={<NewsAdminPage />} />
+      </Route>
 
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
@@ -85,3 +92,9 @@ const App = () => {
 }
 
 export default App
+
+
+
+
+
+

@@ -20,14 +20,29 @@ const NewsPage = () => {
   const limit = 9
 
   const { data, isLoading, isError } = useQuery(['news', page], async () => {
-    const { data } = await newsApi.getAll({ page, limit })
-    return data.data as { items: NewsItem[]; meta: { total: number; page: number; pageSize: number } }
+    const response = await newsApi.getAll({ page, limit })
+    const payload = response.data?.data as
+      | {
+          news?: NewsItem[]
+          pagination?: { total?: number; page?: number; limit?: number; pages?: number }
+        }
+      | undefined
+
+    return {
+      items: payload?.news ?? [],
+      meta: {
+        total: payload?.pagination?.total ?? 0,
+        page: payload?.pagination?.page ?? page,
+        pageSize: payload?.pagination?.limit ?? limit,
+        totalPages: payload?.pagination?.pages ?? 1,
+      },
+    }
   })
 
   const items = data?.items ?? []
   const total = data?.meta.total ?? 0
   const pageSize = data?.meta.pageSize ?? limit
-  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const totalPages = data?.meta.totalPages ?? Math.max(1, Math.ceil(total / pageSize))
 
   const handlePageChange = (nextPage: number) => {
     setSearchParams({ page: String(nextPage) })
@@ -97,3 +112,4 @@ const NewsPage = () => {
 }
 
 export default NewsPage
+
